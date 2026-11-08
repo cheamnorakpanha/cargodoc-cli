@@ -1,12 +1,54 @@
 # CargoDoc
 
-An interactive terminal tool for preparing folders for freelance taxation work.
-It combines the export (`RE-001-2026`) and import (`IMP-001`) folder workflows
-in one persistent prompt. Runs locally; no account or AI service is required.
+CargoDoc is a terminal workspace for preparing import and export folders for
+freelance taxation work. Launch it with `cargodoc`, choose a task, and follow the
+guided prompts. Runs locally; no account or AI service is required.
+
+![CargoDoc terminal workspace with a cyan-to-violet banner, destination panel, and export and import commands](docs/images/cargodoc.png)
+
+- Export folders: `RE-001-2026`, with a configurable year.
+- Import folders: `IMP-001`, with zero padding based on your starting number.
+- Interactive previews and confirmation, plus direct commands for scripts.
+- Cyan-to-violet branding, command completion, and session history.
 
 ## Install on Windows
 
-Requires Python 3.10 or newer. From the repository root in PowerShell:
+Requires Python 3.10 or newer and PowerShell. From the repository root, install
+with [pipx](https://pipx.pypa.io/stable/installation/) to make `cargodoc`
+available from any directory:
+
+```powershell
+python -m pip install --user pipx
+python -m pipx install --editable .
+python -m pipx ensurepath
+```
+
+Open a new terminal, navigate to an existing destination folder, and launch
+CargoDoc. Replace the example path with your own:
+
+```powershell
+cd "D:\Clients\November"
+cargodoc
+```
+
+No virtual environment activation is needed with pipx. The editable installation
+uses this repository's source code, so Python code changes take effect when you
+restart CargoDoc. Keep the repository in place. After moving it or changing
+dependencies or package entry points, reinstall from the repository root:
+
+```powershell
+python -m pipx install --force --editable .
+```
+
+Verify your installation with `cargodoc --version`.
+
+If the command is not recognized, run `python -m pipx ensurepath` and reopen
+your terminal. For an IDE terminal, you may need to restart the IDE so it picks
+up the updated PATH.
+
+### Project-local alternative
+
+For a local installation, use a virtual environment:
 
 ```powershell
 python -m venv .venv
@@ -14,38 +56,26 @@ python -m venv .venv
 .\.venv\Scripts\cargodoc.exe
 ```
 
-To use the short `cargodoc` command in the current terminal, activate the environment:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-cargodoc
-```
-
-If PowerShell blocks activation, use the executable path above. Activation is
-optional. For a command available from any directory and new terminals, install
-with [pipx](https://pipx.pypa.io/stable/installation/):
-
-```powershell
-pipx install .
-pipx ensurepath
-```
-
-Open a new terminal after updating PATH, navigate to your intended destination,
-then run `cargodoc`. To update an existing pipx installation after code changes,
-run `pipx install --force .` from this repository.
+You can also activate it with `.\.venv\Scripts\Activate.ps1`, then use
+`cargodoc` in that terminal. If PowerShell blocks activation, use the executable
+path above.
 
 ## Interactive mode
 
 ```text
-cargodoc > /export
+> /export
 Starting number: 001
 Ending number:   010
 Year:            2026
+
+Create these folders? [y/N]: y
 ```
 
 The tool previews the destination, first and last folder names, and requested
 count, then asks before creating folders. The year defaults to the current year.
-After each task it returns to the prompt.
+Enter `y` or `yes` to confirm; `N` or Enter cancels. After each task it returns
+to the prompt. The destination initially matches the directory from which you
+launched CargoDoc; `/directory` changes it for the current session.
 
 The workspace uses a cyan-to-violet pixel wordmark with layered shadows, mint
 success states, and slate borders. A destination panel sits above three task
@@ -100,6 +130,7 @@ Install the package in editable mode before running it or its tests. The
 `src/` layout keeps imports tied to the installed package:
 
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 .\.venv\Scripts\python.exe -m cargodoc --help
@@ -133,9 +164,8 @@ by Git. Previously generated files in `EXP/` and `IMP/` may remain locally.
 ## Original standalone executables
 
 The original scripts and PyInstaller specs are in `legacy/export` and
-`legacy/import`. They run
-independently of CargoDoc, and the original export script still uses its fixed
-2026 suffix. To rebuild them with PyInstaller installed:
+`legacy/import`. They run independently of CargoDoc, and the original export
+script still uses its fixed 2026 suffix. To rebuild them with PyInstaller installed:
 
 ```powershell
 cd legacy\export
