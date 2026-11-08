@@ -96,25 +96,53 @@ output is redirected.
 
 ## Development
 
+Install the package in editable mode before running it or its tests. The
+`src/` layout keeps imports tied to the installed package:
+
 ```powershell
-python -m unittest discover -s tests -v
-python -m cargodoc --help
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m cargodoc --help
 ```
 
-The package uses `prompt_toolkit` for input and completion, Rich for output,
-and shared folder operations in `cargodoc/folders.py`.
+```text
+src/cargodoc/
+  __init__.py
+  __main__.py       # python -m cargodoc
+  cli.py            # Direct command arguments and task dispatch
+  interactive.py    # Persistent session and guided questions
+  folders.py        # Folder validation and creation, independent of the UI
+  ui/
+    __init__.py
+    theme.py        # Colors, prompt styles, and shared console
+    banner.py       # Responsive CargoDoc wordmark
+    views.py        # Welcome, prompts, help, previews, and results
+tests/
+  test_folders.py
+  test_cli.py
+  test_interactive.py
+legacy/
+  export/           # Original export script and PyInstaller spec
+  import/           # Original import script and PyInstaller spec
+```
+
+The package uses `prompt_toolkit` for input and completion and Rich for output.
+Build outputs, executables, virtual environments, and editor caches are ignored
+by Git. Previously generated files in `EXP/` and `IMP/` may remain locally.
 
 ## Original standalone executables
 
-The original scripts and PyInstaller specs remain in `EXP` and `IMP`. They run
+The original scripts and PyInstaller specs are in `legacy/export` and
+`legacy/import`. They run
 independently of CargoDoc, and the original export script still uses its fixed
 2026 suffix. To rebuild them with PyInstaller installed:
 
 ```powershell
-cd EXP
+cd legacy\export
 pyinstaller export.spec
-cd ..\IMP
+cd ..\import
 pyinstaller import.spec
 ```
 
-Outputs are `EXP\dist\export.exe` and `IMP\dist\import.exe`.
+Outputs are `legacy\export\dist\export.exe` and
+`legacy\import\dist\import.exe`.

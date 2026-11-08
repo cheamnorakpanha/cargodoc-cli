@@ -11,63 +11,13 @@ from prompt_toolkit.input import DummyInput
 from prompt_toolkit.output import DummyOutput
 
 from cargodoc.cli import main
-from cargodoc.folders import FolderPlan, create_folders
 
 
-class FolderTests(unittest.TestCase):
+class InteractiveTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.destination = Path(self.temp.name)
-
-    def plan(self, kind="export", start="001", end="003", year=2027):
-        return FolderPlan(kind, start, end, self.destination, year)
-
-    def test_export_padding_and_configurable_year(self):
-        result = create_folders(self.plan())
-        self.assertEqual(result.created, 3)
-        self.assertEqual(sorted(p.name for p in self.destination.iterdir()),
-                         ["RE-001-2027", "RE-002-2027", "RE-003-2027"])
-
-    def test_existing_directory_and_file_conflict(self):
-        (self.destination / "IMP-001").mkdir()
-        conflict = self.destination / "IMP-002"
-        conflict.write_text("keep me")
-        result = create_folders(self.plan(kind="import"))
-        self.assertEqual((result.created, result.existing, len(result.failed)), (1, 1, 1))
-        self.assertEqual(conflict.read_text(), "keep me")
-        again = create_folders(self.plan(kind="import"))
-        self.assertEqual((again.created, again.existing, len(again.failed)), (0, 2, 1))
-
-    def test_invalid_ranges_make_no_folders(self):
-        for start, end in [("", "3"), ("-1", "3"), ("1.0", "3"), ("3", "1"),
-                           ("1", "100001"), ("１２", "１３"), ("1" * 13, "2" * 13)]:
-            with self.subTest(start=start, end=end), self.assertRaises(ValueError):
-                self.plan(start=start, end=end)
-        with self.assertRaises(ValueError):
-            self.plan(year=99)
-        self.assertEqual(list(self.destination.iterdir()), [])
-
-    def test_missing_destination(self):
-        with self.assertRaises(ValueError):
-            FolderPlan("export", "1", "2", self.destination / "missing", 2026)
-
-    def invoke(self, *args):
-        with contextlib.redirect_stdout(io.StringIO()):
-            return main([*args, "--directory", str(self.destination)])
-
-    def test_direct_dry_run_and_create(self):
-        args = ("export", "--start", "009", "--end", "010", "--year", "2028")
-        self.assertEqual(self.invoke(*args, "--dry-run"), 0)
-        self.assertEqual(list(self.destination.iterdir()), [])
-        self.assertEqual(self.invoke(*args), 0)
-        self.assertTrue((self.destination / "RE-009-2028").is_dir())
-        self.assertTrue((self.destination / "RE-010-2028").is_dir())
-
-    def test_direct_errors_return_nonzero(self):
-        self.assertEqual(self.invoke("import", "--start", "3", "--end", "1"), 2)
-        (self.destination / "IMP-1").write_text("keep me")
-        self.assertEqual(self.invoke("import", "--start", "1", "--end", "1"), 1)
 
     def run_session(self, commands, answers, real_answers=False):
         command_session = Mock()
@@ -89,10 +39,10 @@ class FolderTests(unittest.TestCase):
             answer_session = Mock()
             answer_session.prompt.side_effect = answers
         with contextlib.redirect_stdout(io.StringIO()), \
-             patch("cargodoc.cli.sys.stdin.isatty", return_value=True), \
-             patch("cargodoc.cli.sys.stdout.isatty", return_value=True), \
-             patch("cargodoc.cli.Path.cwd", return_value=self.destination), \
-             patch("cargodoc.cli.PromptSession", side_effect=[command_session, answer_session]):
+             patch("cargodoc.interactive.sys.stdin.isatty", return_value=True), \
+             patch("cargodoc.interactive.sys.stdout.isatty", return_value=True), \
+             patch("cargodoc.interactive.Path.cwd", return_value=self.destination), \
+             patch("cargodoc.interactive.PromptSession", side_effect=[command_session, answer_session]):
             return main([])
 
     def test_interactive_create_then_return_to_prompt(self):

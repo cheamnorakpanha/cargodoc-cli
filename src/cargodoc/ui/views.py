@@ -1,10 +1,8 @@
-"""CargoDoc's responsive cyan-to-violet terminal identity."""
-
+"""Welcome screen, prompts, task previews, and result presentation."""
 from pathlib import Path
 from shutil import get_terminal_size
 
 from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit.styles import Style
 from rich import box
 from rich.console import Group
 from rich.panel import Panel
@@ -12,71 +10,8 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-ACCENT = "#35d9f5"
-VIOLET = "#9270ff"
-SECONDARY = "#67e8c0"
-MUTED = "#94a3b8"
-FRAME = "#46516c"
-PROMPT_STYLE = Style.from_dict({
-    "prompt": f"bold {ACCENT}",
-    "brand": f"bold {VIOLET}",
-    "frame": FRAME,
-    "hint": MUTED,
-    "bottom-toolbar": "noreverse",
-    "completion-menu.completion": "bg:#191d30 #e2e8f0",
-    "completion-menu.completion.current": f"bg:{ACCENT} #101320 bold",
-    "completion-menu.meta.completion": "bg:#191d30 #94a3b8",
-    "completion-menu.meta.completion.current": f"bg:{ACCENT} #101320",
-    "validation-toolbar": "bg:#191d30 #fda4af",
-})
-
-# Small native terminal glyphs keep the banner sharp at every font size.
-GLYPHS = {
-    "C": ("01111", "11000", "11000", "11000", "11000", "11000", "01111"),
-    "A": ("01110", "11011", "11011", "11111", "11011", "11011", "11011"),
-    "R": ("11110", "11011", "11011", "11110", "11100", "11010", "11011"),
-    "G": ("01111", "11000", "11000", "11011", "11011", "11011", "01111"),
-    "O": ("01110", "11011", "11011", "11011", "11011", "11011", "01110"),
-    "D": ("11110", "11011", "11011", "11011", "11011", "11011", "11110"),
-}
-
-
-def gradient(position):
-    """Interpolate cyan through blue to violet across the wordmark."""
-    start, end = (53, 217, 245), (145, 91, 255)
-    rgb = [round(a + (b - a) * position) for a, b in zip(start, end)]
-    return "#" + "".join(f"{channel:02x}" for channel in rgb)
-
-
-def supports_blocks(console):
-    try:
-        "█░─".encode(console.encoding)
-        return True
-    except UnicodeEncodeError:
-        return False
-
-
-def wordmark(console):
-    if console.width < 52 or not supports_blocks(console):
-        return Text.assemble(("CARGO", f"bold {ACCENT}"), ("DOC", f"bold {VIOLET}"))
-    scale = 2 if console.width >= 100 else 1
-    rows = ["0".join(GLYPHS[letter][row] for letter in "CARGODOC") for row in range(7)]
-    pixels = {(x * scale + step, y) for y, row in enumerate(rows)
-              for x, value in enumerate(row) if value == "1" for step in range(scale)}
-    width = len(rows[0]) * scale + 2
-    result = Text()
-    for y in range(9):
-        for x in range(width):
-            if (x, y) in pixels:
-                result.append("█", style=gradient(x / (width - 1)))
-            elif (x - 1, y - 1) in pixels or (x - 2, y - 2) in pixels:
-                result.append("░", style="#3c375f")
-            else:
-                result.append(" ")
-        if y < 8:
-            result.append("\n")
-    return result
-
+from .banner import supports_blocks, wordmark
+from .theme import ACCENT, VIOLET, SECONDARY, MUTED, FRAME, console
 
 def welcome(console, destination: Path, recent="No tasks yet. Ready when you are."):
     width = min(console.width, 112)
@@ -125,6 +60,47 @@ def welcome(console, destination: Path, recent="No tasks yet. Ready when you are
     console.print(Rule(style=FRAME, characters=rule), width=width)
     console.print(Text.assemble(("SESSION  ", f"bold {VIOLET}"), (recent, MUTED)), width=width)
     console.print(Text("Type / to start a task. Tab explores commands.\n", style=MUTED))
+
+
+def preview(plan):
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column(style="dim")
+    table.add_column()
+    table.add_row("Destination", str(plan.destination))
+    table.add_row("First", plan.name(int(plan.start)))
+    table.add_row("Last", plan.name(int(plan.end)))
+    table.add_row("Requested", str(plan.count))
+    console.print(Panel(table, title=f"{plan.kind.title()} · review", title_align="left",
+                        border_style=FRAME, box=box.ROUNDED, padding=(1, 1)))
+
+
+def show_result(result):
+    summary = Text.assemble((f"{result.created} created", f"bold {SECONDARY}"),
+                            (f"   {result.existing} already existing", "dim"),
+                            (f"   {len(result.failed)} failed", "red" if result.failed else "dim"))
+    console.print(Panel(summary, title="Needs attention" if result.failed else "Task complete",
+                        title_align="left", border_style="red" if result.failed else SECONDARY,
+                        box=box.ROUNDED))
+    for path, error in result.failed:
+        console.print(f"{path.name}: {error}", style="red", markup=False)
+    return 1 if result.failed else 0
+
+
+def show_help():
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column(style=f"bold {ACCENT}")
+    table.add_column()
+    for command, description in (
+        ("/export", "Create RE-001-YEAR folders"),
+        ("/import", "Create IMP-001 folders"),
+        ("/directory", "Change the destination for this session"),
+        ("/help", "Show commands"),
+        ("/clear", "Clear the screen and return to the welcome panel"),
+        ("/exit", "Quit"),
+    ):
+        table.add_row(command, description)
+    console.print(Panel(table, title="Commands", title_align="left", border_style=ACCENT))
+    console.print("Tab completes commands. Up/Down recalls commands. Ctrl+C cancels; Ctrl+D exits.", style="dim")
 
 
 def command_prompt():
