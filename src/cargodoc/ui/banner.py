@@ -29,10 +29,10 @@ def supports_blocks(console):
         return False
 
 
-def wordmark(console):
-    if console.width < 52 or not supports_blocks(console):
+def wordmark(console, width):
+    if width < 52 or not supports_blocks(console):
         return Text.assemble(("CARGO", f"bold {ACCENT}"), ("DOC", f"bold {VIOLET}"))
-    scale = 2 if console.width >= 100 else 1
+    scale = 2 if width >= 96 else 1
     rows = ["0".join(GLYPHS[letter][row] for letter in "CARGODOC") for row in range(7)]
     pixels = {(x * scale + step, y) for y, row in enumerate(rows)
               for x, value in enumerate(row) if value == "1" for step in range(scale)}
