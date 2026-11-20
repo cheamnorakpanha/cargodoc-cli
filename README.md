@@ -4,7 +4,7 @@ CargoDoc is a terminal workspace for preparing import and export folders for
 freelance taxation work. Launch it with `cargodoc`, choose a task, and follow the
 guided prompts. Runs locally; no account or AI service is required.
 
-![CargoDoc terminal workspace with a cyan-to-violet banner, destination panel, and export and import commands](docs/images/cargodoc.png)
+![CargoDoc terminal workspace with a double-line violet frame and four color-coded task cards](docs/images/cargodoc.png)
 
 - Export folders: `RE-001-2026`, with a configurable year.
 - Import folders: `IMP-001`, with zero padding based on your starting number.
@@ -79,10 +79,10 @@ to the prompt. The destination initially matches the directory from which you
 launched CargoDoc; `/directory` changes it for the current session.
 
 The workspace uses a cyan-to-violet pixel wordmark with layered shadows, mint
-success states, and slate borders. A destination panel sits above three task
-cards for outbound, inbound, and workspace actions. The banner scales down in
-smaller windows and uses plain text in terminals without block character support.
-At widths below 88 columns, the cards become a compact command list. The
+success states, and a double-line violet frame. A cyan destination panel sits
+above four color-coded task cards. The banner scales down in smaller windows and
+uses plain text in terminals without block character support.
+At widths below 96 columns, the cards become a compact command list. The
 command area includes completion and shortcut hints. `/clear` redraws the
 workspace with the latest task from this session. Colors respect your terminal's
 background; redirected output stays readable without color.
