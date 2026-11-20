@@ -8,6 +8,7 @@ guided prompts. Runs locally; no account or AI service is required.
 
 - Export folders: `RE-001-2026`, with a configurable year.
 - Import folders: `IMP-001`, with zero padding based on your starting number.
+- Skipped folders: `IMP-720 - skipped` or `RE-720-2026 - skipped`.
 - Interactive previews and confirmation, plus direct commands for scripts.
 - Cyan-to-violet branding, command completion, and session history.
 
@@ -90,6 +91,7 @@ background; redirected output stays readable without color.
 | --- | --- |
 | `/export` | Create `RE-NUMBER-YEAR` folders |
 | `/import` | Create `IMP-NUMBER` folders |
+| `/skipped` | Create skipped import or export folders from the starting number through the ending number |
 | `/directory` | Choose an existing destination directory for this session |
 | `/help` | Show available commands |
 | `/clear` | Redraw the welcome screen and latest session activity |

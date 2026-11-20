@@ -36,6 +36,7 @@ def welcome(console, destination: Path, recent="No tasks yet. Ready when you are
         ("01 / OUTBOUND", "/export", "Export folders", "RE-001-YEAR", ACCENT),
         ("02 / INBOUND", "/import", "Import folders", "IMP-001", "#6aafff"),
         ("03 / WORKSPACE", "/directory", "Switch destination", "Choose a folder", VIOLET),
+        ("04 / EXCEPTION", "/skipped", "Skip a range", "IMP-720 - skipped", SECONDARY),
     )
     if width >= 88:
         cards = Table.grid(expand=True, padding=(0, 1))
@@ -70,7 +71,9 @@ def preview(plan):
     table.add_row("First", plan.name(int(plan.start)))
     table.add_row("Last", plan.name(int(plan.end)))
     table.add_row("Requested", str(plan.count))
-    console.print(Panel(table, title=f"{plan.kind.title()} · review", title_align="left",
+    task = "skipped folders" if plan.skipped else "review"
+    title = f"{plan.kind.title()} · {task}"
+    console.print(Panel(table, title=title, title_align="left",
                         border_style=FRAME, box=box.ROUNDED, padding=(1, 1)))
 
 
@@ -93,6 +96,7 @@ def show_help():
     for command, description in (
         ("/export", "Create RE-001-YEAR folders"),
         ("/import", "Create IMP-001 folders"),
+        ("/skipped", "Create skipped import or export folders for a range"),
         ("/directory", "Change the destination for this session"),
         ("/help", "Show commands"),
         ("/clear", "Clear the screen and return to the welcome panel"),

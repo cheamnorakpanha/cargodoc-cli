@@ -13,12 +13,13 @@ from .folders import FolderPlan
 from .ui.theme import ACCENT, PROMPT_STYLE, console
 from .ui.views import command_prompt, toolbar, welcome, preview, show_help
 
-COMMANDS = ["/export", "/import", "/directory", "/help", "/clear", "/exit"]
+COMMANDS = ["/export", "/import", "/skipped", "/directory", "/help", "/clear", "/exit"]
 
 
-def ask_plan(session, kind, destination):
+def ask_plan(session, kind, destination, *, skipped=False):
     console.print()
-    console.print(Text(f"  {kind.title()} folders", style=f"bold {ACCENT}"))
+    heading = "skipped folders" if skipped else "folders"
+    console.print(Text(f"  {kind.title()} {heading}", style=f"bold {ACCENT}"))
     console.print("  Start with 001 for three-digit folder numbers. Ctrl+C cancels.\n", style="dim")
     digits = Validator.from_callable(
         lambda text: bool(text) and text.isascii() and text.isdecimal() and len(text) <= 12,
@@ -32,7 +33,7 @@ def ask_plan(session, kind, destination):
             lambda text: text.isascii() and text.isdecimal() and len(text) == 4 and int(text) >= 1000,
             error_message="Enter a four-digit year.",
         )))
-    return FolderPlan(kind, start, end, destination, year)
+    return FolderPlan(kind, start, end, destination, year, skipped=skipped)
 
 
 def interactive(execute):
@@ -68,14 +69,24 @@ def interactive(execute):
                     raise ValueError("Choose an existing directory.")
                 destination = candidate
                 console.print(f"Destination: {destination}", markup=False)
-            elif command in {"/export", "/import"}:
-                plan = ask_plan(answers, command[1:], destination)
+            elif command in {"/export", "/import", "/skipped"}:
+                skipped = command == "/skipped"
+                kind = command[1:]
+                if skipped:
+                    answers.validator = None
+                    kind = answers.prompt("Skipped folder type [import/export]: ",
+                                          completer=WordCompleter(["import", "export"])).strip().lower()
+                    if kind not in {"import", "export"}:
+                        raise ValueError("Choose import or export.")
+                plan = ask_plan(answers, kind, destination, skipped=skipped)
                 preview(plan)
                 answers.validator = None
-                answer = answers.prompt("Create these folders? [y/N]: ").strip().lower()
+                folders = "skipped folders" if skipped else "folders"
+                answer = answers.prompt(f"Create these {folders}? [y/N]: ").strip().lower()
                 if answer in {"y", "yes"}:
                     status = execute(plan)
-                    recent = f"{plan.kind.title()} · {plan.count} requested · {'needs attention' if status else 'complete'}"
+                    task = f"{kind.title()} skipped" if skipped else kind.title()
+                    recent = f"{task} · {plan.count} requested · {'needs attention' if status else 'complete'}"
                 else:
                     console.print("Cancelled.", style="dim")
             elif command:
