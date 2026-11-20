@@ -55,6 +55,15 @@ class InteractiveTests(unittest.TestCase):
                                          ["001", "002", "", KeyboardInterrupt()]), 0)
         self.assertEqual(list(self.destination.iterdir()), [])
 
+    def test_skipped_creates_inclusive_ranges(self):
+        commands = ["/skipped", "/skipped", "/exit"]
+        answers = ["import", "002", "004", "yes", "export", "07", "08", "2029", "y"]
+        self.assertEqual(self.run_session(commands, answers, real_answers=True), 0)
+        self.assertEqual(sorted(path.name for path in self.destination.iterdir()), [
+            "IMP-002 - skipped", "IMP-003 - skipped", "IMP-004 - skipped",
+            "RE-07-2029 - skipped", "RE-08-2029 - skipped",
+        ])
+
     def test_interactive_destination_change(self):
         target = self.destination / "client folder"
         target.mkdir()

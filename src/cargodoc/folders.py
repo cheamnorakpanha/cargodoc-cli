@@ -11,6 +11,7 @@ class FolderPlan:
     end: str
     destination: Path
     year: int
+    skipped: bool = False
 
     def __post_init__(self):
         if self.kind not in {"export", "import"}:
@@ -35,7 +36,8 @@ class FolderPlan:
 
     def name(self, number):
         padded = str(number).zfill(len(self.start))
-        return f"RE-{padded}-{self.year}" if self.kind == "export" else f"IMP-{padded}"
+        base = f"RE-{padded}-{self.year}" if self.kind == "export" else f"IMP-{padded}"
+        return f"{base} - skipped" if self.skipped else base
 
     def paths(self):
         for number in range(int(self.start), int(self.end) + 1):
